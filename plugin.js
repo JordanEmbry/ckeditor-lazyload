@@ -68,16 +68,19 @@
               var dialog = this.getDialog();
               var element = dialog.getSelectedElement();
               var blnChecked = this.getValue();
+              var original = dialog.originalElement;
               dialog.dontResetSize = true;
               dialog.setValueOf('info', 'txtHeight', parseInt(element.getStyle('height'),10));
               dialog.setValueOf('info', 'txtWidth', parseInt(element.getStyle('width'),10));
               if(blnChecked) {
+                dialog.setValueOf('lazyLoad', 'lazyLoadDataOrig', original.getAttribute('src'));
                 dialog.setValueOf('info', 'txtUrl', TRANS_IMAGE_PATH);
               } else {
+                dialog.setValueOf('lazyLoad', 'lazyLoadDataOrig', "");
                 if(element.hasAttribute('data-original')) {
-                  dialog.setValueOf('info', 'txtUrl', element.getAttribute('data-original'));
+                  dialog.setValueOf('info', 'txtUrl', original.getAttribute('data-original'));
                 } else {
-                  dialog.setValueOf('info', 'txtUrl', element.getAttribute('src'));
+                  dialog.setValueOf('info', 'txtUrl', original.getAttribute('src'));
                 }
               }
             },
@@ -90,10 +93,27 @@
                   var original = dialog.originalElement;
                   var div = new CKEDITOR.dom.element('div');
                   var noScript = new CKEDITOR.dom.element('noscript');
-                  var noScriptImg = element.clone();
+                  var noScriptImg = new CKEDITOR.dom.element('img');
+                  noScriptImg.copyAttributes(original); 
 
-                  noScript.append(noScriptImg); 
-                  element.setAttribute('data-original', element.getAttribute('src')); 
+                  element.setAttribute('data-original', dialog.getValueOf('lazyLoad', 'lazyLoadDataOrig'));
+                  noScriptImg.setAttribute('src', dialog.getValueOf('lazyLoad', 'lazyLoadDataOrig'));
+
+                  if(element.hasAttribute('title')) {
+                    noScriptImg.setAttribute('title', element.getAttribute("title"));
+                  }
+                  if(element.hasAttribute('alt')) {
+                    noScriptImg.setAttribute('alt', element.getAttribute("alt"));
+                  }
+                  if(element.hasAttribute('style')) {
+                    noScriptImg.setAttribute('style', element.getAttribute("style"));
+                  }
+                  if(element.hasAttribute('align')) {
+                    noScriptImg.setAttribute('align', element.getAttribute("align"));
+                  }
+
+                  noScript.append(noScriptImg);
+
                   element.removeAttribute('src'); 
                   element.setAttribute('src', TRANS_IMAGE_PATH); 
                   original.setAttribute('src', TRANS_IMAGE_PATH); 
@@ -114,7 +134,16 @@
                 }
               }
             }
-					}
+					},
+          {
+            id : 'lazyLoadDataOrig',
+						type : 'text',
+						label : 'The destination image file for lazy load (attribute data-original).',
+            setup : function(type, element) {
+              var field = this;
+              field.setValue((element.getAttribute('data-original') !== null) ? element.getAttribute('data-original') : "");
+            }
+          }
 				]
 			});
 		}
